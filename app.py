@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from datetime import date
 
 app = Flask(__name__)
 
@@ -17,6 +18,17 @@ class Card(db.Model):
 def create_db():
   db.create_all()
   print('Tables created successfully')
+
+@app.cli.command('seed')
+def seed_db():
+    card = Card(
+      title = 'Start the project',
+      description = 'Stage 1 - Create an ERD',
+      date = date.today()
+    )
+
+    db.session.add(card)
+    
 
 @app.route('/')
 def index():
