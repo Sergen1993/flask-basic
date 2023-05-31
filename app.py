@@ -8,22 +8,19 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://trello_dev:spameg
 db = SQLAlchemy(app)
 
 class Card(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100))
-    description = db.Column(db.Text())
-    date_created = db.Column(db.Date())
+  id = db.Column(db.Integer, primary_key=True)
+  title = db.Column(db.String(100))
+  description = db.Column(db.Text())
+  date_created = db.Column(db.Date())
 
-db.create_all()
-
-
-app.cli.command('create')
+@app.cli.command('create')
 def create_db():
-    db.create_all()
-    print('tables created successfully')
+  db.create_all()
+  print('Tables created successfully')
 
 @app.route('/')
 def index():
-    return 'Hello World!'
+  return 'Hello World!'
 
 if __name__ == '__main__':
-    app.run(debug=True)
+  app.run(debug=True)
