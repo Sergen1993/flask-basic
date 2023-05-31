@@ -9,6 +9,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://trello_dev:spameg
 db = SQLAlchemy(app)
 
 class Card(db.Model):
+  __tablename__ = 'cards'
+
   id = db.Column(db.Integer, primary_key=True)
   title = db.Column(db.String(100))
   description = db.Column(db.Text())
@@ -34,7 +36,7 @@ def seed_db():
 
     # Add the card to the session (transaction)
     db.session.add(card)
-    
+
     # Commit the transaction to the adress
     db.session.commit()
     print('Models seeded')
