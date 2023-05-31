@@ -16,19 +16,29 @@ class Card(db.Model):
 
 @app.cli.command('create')
 def create_db():
+  db.drop_all()
   db.create_all()
   print('Tables created successfully')
 
 @app.cli.command('seed')
 def seed_db():
+    # Create an instance of the Card model in memory
     card = Card(
       title = 'Start the project',
       description = 'Stage 1 - Create an ERD',
-      date = date.today()
+      date_created = date.today()
     )
 
+    # Truncste the Card table
+    db.session.query(Card).delete()
+
+    # Add the card to the session (transaction)
     db.session.add(card)
     
+    # Commit the transaction to the adress
+    db.session.commit()
+    print('Models seeded')
+
 
 @app.route('/')
 def index():
