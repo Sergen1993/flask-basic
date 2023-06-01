@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
+import json
 
 app = Flask(__name__)
 
@@ -14,6 +15,7 @@ class Card(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   title = db.Column(db.String(100))
   description = db.Column(db.Text())
+  status = db.Column(db.String(30))
   date_created = db.Column(db.Date())
 
 @app.cli.command('create')
@@ -29,16 +31,19 @@ def seed_db():
         Card(
             title='Start the project',
             description='Stage 1 - Create an ERD',
+            status="Done",
             date_created=date.today()
         ),
         Card(
             title='ORM Queries',
             description='Stage 2 - Implement several queries',
+            status="In Progress",
             date_created=date.today()
         ),
         Card(
             title='Marshmallow',
             description='Stage 3 - Implement jsonify of models',
+            status="In progress",
             date_created=date.today()
         )
     ]
@@ -55,15 +60,12 @@ def seed_db():
     print('Models seeded')
 
 
-@app.cli.command('all_cards')
+@app.route('/cards')
 def all_cards():
     # Select all cards from the table
-    stmt = db.select(Card).limit(2)
+    stmt = db.select(Card).order_by (Card.status.desc())
     cards = db.session.scalars(stmt).all()
-
-    # Iterate over the cards and print their titles
-    for card in cards:
-        print(card.title)
+    return json.dumps(cards)
 
 
 @app.route('/')
