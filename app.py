@@ -24,22 +24,46 @@ def create_db():
 
 @app.cli.command('seed')
 def seed_db():
-    # Create an instance of the Card model in memory
-    card = Card(
-      title = 'Start the project',
-      description = 'Stage 1 - Create an ERD',
-      date_created = date.today()
-    )
+    # Create instances of the Card model in memory
+    cards = [
+        Card(
+            title='Start the project',
+            description='Stage 1 - Create an ERD',
+            date_created=date.today()
+        ),
+        Card(
+            title='ORM Queries',
+            description='Stage 2 - Implement several queries',
+            date_created=date.today()
+        ),
+        Card(
+            title='Marshmallow',
+            description='Stage 3 - Implement jsonify of models',
+            date_created=date.today()
+        )
+    ]
 
-    # Truncste the Card table
+    # Truncate the Card table
     db.session.query(Card).delete()
 
-    # Add the card to the session (transaction)
-    db.session.add(card)
+    # Add each card to the session (transaction)
+    for card in cards:
+        db.session.add(card)
 
-    # Commit the transaction to the adress
+    # Commit the transaction to the database
     db.session.commit()
     print('Models seeded')
+
+
+@app.cli.command('all_cards')
+def all_cards():
+    # Select all cards from the table
+    stmt = db.select(Card).limit(2)
+    cards = db.session.scalars(stmt).all()
+
+    # Iterate over the cards and print their titles
+    for card in cards:
+        print(card.title)
 
 
 @app.route('/')
