@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from flask_marshmallow import Marshmallow
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 
@@ -13,6 +14,7 @@ app.config[
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
+bcrypt = Bcrypt(app)
 
 class User(db.Model):
    __tablename__ = 'users'
@@ -53,13 +55,13 @@ def seed_db():
     users = [
        User(
         email="admin@spam.com", 
-        password='spinynorman',
+        password=bcrypt.generate_password_hash('spinynorman').decode('utf-8'),
         is_admin=True
        ),
        User(
-        name='john cleese',
+        name='John Cleese',
         email='cleese@spam.com',
-        password='cleese'
+        password=bcrypt.generate_password_hash('tisbutascratch').decode('utf-8')
        )
     ]
     # Create an instance of the Card model in memory
