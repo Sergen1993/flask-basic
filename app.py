@@ -4,10 +4,12 @@ from datetime import date
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
 from sqlalchemy.exc import IntegrityError
+from flask_jwt_extended import JWTManager, create_access_token
+from datetime import timedelta
 
 app = Flask(__name__)
 
-app.config['JSON_SORT_KEYS'] = False
+app.config['JWT_SECRET_KEY'] = 'Ministry of Silly Walks' 
 
 app.config[
     "SQLALCHEMY_DATABASE_URI"
@@ -16,6 +18,8 @@ app.config[
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 bcrypt = Bcrypt(app)
+jwt = JWTManager(app)
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -124,6 +128,19 @@ def register():
     except IntegrityError:
         return {'error': 'Email address already in use'}, 409
 
+
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        stmt = db.select(User).filter_by(email=request.json['email'])
+        user = db.session.scalar(stmt)
+        if user and bcrypt.check_password_hash(user.password, request.json['password']):
+            token = create_access_token(identity=user.email, expires_delta=timedelta(days=1))
+            return {'token': token, 'user': UserSchema(exclude=['password']).dump(user)}
+        else:
+            return {'error': 'Invalid email address or password'}, 401
+    except KeyError:
+        return {'error': 'Email and password are required'}, 400
 
 @app.route('/cards')
 def all_cards():
