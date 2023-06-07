@@ -4,7 +4,7 @@ from datetime import date
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
 from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity
 from datetime import timedelta
 
 app = Flask(__name__)
@@ -143,7 +143,14 @@ def login():
         return {'error': 'Email and password are required'}, 400
 
 @app.route('/cards')
+@jwt_required()
 def all_cards():
+  user_email = get_jwt_identity()
+  stmt = db.select(User).filtr_by(email=user_email)
+  user = db.session.scalar(stmt)
+  if not user.is_admin:
+      return {'error': 'You must be a admin'}, 401
+
   # select * from cards;
   stmt = db.select(Card).order_by(Card.status.desc())
   cards = db.session.scalars(stmt).all()
