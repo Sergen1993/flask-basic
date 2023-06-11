@@ -1,19 +1,19 @@
 from flask import Blueprint
-from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from models.user import User
 from models.card import Card
-from init import db, bcyrpt
+from init import db, bcrypt
 
-db_commands = Blueprint('db', __name__)
+cli_bp = Blueprint('db', __name__)
 
-@db_commands.cli.command("create")
+@cli_bp.cli.command("create")
 def create_db():
     db.drop_all()
     db.create_all()
     print("Tables created successfully")
 
-@db_commands.cli.command("seed")
+
+@cli_bp.cli.command("seed")
 def seed_db():
     users = [
         User(
@@ -28,6 +28,7 @@ def seed_db():
         )
     ]
 
+    # Create an instance of the Card model in memory
     cards = [
         Card(
             title="Start the project",
@@ -49,11 +50,14 @@ def seed_db():
         ),
     ]
 
+    # Truncate the Card table
     db.session.query(Card).delete()
     db.session.query(User).delete()
 
+    # Add the card to the session (transaction)
     db.session.add_all(cards)
     db.session.add_all(users)
 
+    # Commit the transaction to the database
     db.session.commit()
     print("Models seeded")

@@ -10,6 +10,6 @@ class Card(db.Model):
     date_created = db.Column(db.Date())
 
 class CardSchema(ma.Schema):
-    class Meta:
-        fields = ('id', 'title', 'description', 'status')
-        ordered = True
+  class Meta:
+    fields = ('id', 'title', 'description', 'status')
+    ordered = True
