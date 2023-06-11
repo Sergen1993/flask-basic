@@ -4,12 +4,12 @@ from datetime import date
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
 from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
 from datetime import timedelta
 
 app = Flask(__name__)
 
-app.config['JWT_SECRET_KEY'] = 'Ministry of Silly Walks' 
+app.config['JWT_SECRET_KEY'] = 'Ministry of Silly Walks'
 
 app.config[
     "SQLALCHEMY_DATABASE_URI"
@@ -19,6 +19,13 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
+
+def admin_required():
+    user_email = get_jwt_identity()
+    stmt = db.select(User).filter_by(email=user_email)
+    user = db.session.scalar(stmt)
+    if not (user and user.is_admin):
+        return {'error': 'You must be an admin'}, 401
 
 
 class User(db.Model):
@@ -34,7 +41,6 @@ class UserSchema(ma.Schema):
     class Meta:
         fields = ('name', 'email', 'password', 'is_admin')
 
-
 class Card(db.Model):
     __tablename__ = "cards"
 
@@ -45,16 +51,15 @@ class Card(db.Model):
     date_created = db.Column(db.Date())
 
 class CardSchema(ma.Schema):
-  class Meta:
-    fields = ('id', 'title', 'description', 'status')
-    ordered = True
+    class Meta:
+        fields = ('id', 'title', 'description', 'status')
+        ordered = True
 
 @app.cli.command("create")
 def create_db():
     db.drop_all()
     db.create_all()
     print("Tables created successfully")
-
 
 @app.cli.command("seed")
 def seed_db():
@@ -71,7 +76,6 @@ def seed_db():
         )
     ]
 
-    # Create an instance of the Card model in memory
     cards = [
         Card(
             title="Start the project",
@@ -93,41 +97,27 @@ def seed_db():
         ),
     ]
 
-    # Truncate the Card table
     db.session.query(Card).delete()
     db.session.query(User).delete()
-
-    # Add the card to the session (transaction)
     db.session.add_all(cards)
     db.session.add_all(users)
-
-    # Commit the transaction to the database
     db.session.commit()
     print("Models seeded")
-
 
 @app.route('/register', methods=['POST'])
 def register():
     try:
-        # Parse, sanitize and validate the incoming JSON data
-        # via the schema
         user_info = UserSchema().load(request.json)
-        # Create a new User model instance with the schema data
         user = User(
             email=user_info['email'],
             password=bcrypt.generate_password_hash(user_info['password']).decode('utf-8'),
             name=user_info['name']
         )
-
-        # Add and commit the new user
         db.session.add(user)
         db.session.commit()
-
-        # Return the new user, excluding the password
         return UserSchema(exclude=['password']).dump(user), 201
     except IntegrityError:
         return {'error': 'Email address already in use'}, 409
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -145,21 +135,15 @@ def login():
 @app.route('/cards')
 @jwt_required()
 def all_cards():
-  user_email = get_jwt_identity()
-  stmt = db.select(User).filtr_by(email=user_email)
-  user = db.session.scalar(stmt)
-  if not user.is_admin:
-      return {'error': 'You must be a admin'}, 401
-
-  # select * from cards;
-  stmt = db.select(Card).order_by(Card.status.desc())
-  cards = db.session.scalars(stmt).all()
-  return CardSchema(many=True).dump(cards)
-
+    admin_required()
+    stmt = db.select(Card).order_by(Card.status.desc())
+    cards = db.session.scalars(stmt).all()
+    return CardSchema(many=True).dump(cards)
 
 @app.route("/")
 def index():
     return "Hello World!"
+
 
 
 if __name__ == "__main__":
