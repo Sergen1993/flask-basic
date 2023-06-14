@@ -13,12 +13,12 @@ class Card(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     user = db.relationship('User', back_populates='cards')
-    comments = db.relationship('Comment', back_populates='card')
+    comments = db.relationship('Comment', back_populates='card', cascade='all, delete')
 
 
 class CardSchema(ma.Schema):
   # Tell Marshmallow to use UserSchema to serialize the 'user' field
-  user = fields.Nested('UserSchema', exclude=['password', 'cards'])
+  user = fields.Nested('UserSchema', exclude=['password', 'cards', 'comments'])
   comments = fields.List(fields.Nested('CommentSchema', exclude=['card', 'id']))
 
   class Meta:

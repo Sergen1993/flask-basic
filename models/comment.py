@@ -13,14 +13,14 @@ class Comment(db.Model):
     user = db.relationship('User', back_populates='comments')
 
     card_id = db.Column(db.Integer, db.ForeignKey('cards.id'), nullable=False)
-    user = db.relationship('Card', back_populates='comments')
-
+    card = db.relationship('Card', back_populates='comments')
 
 
 class CommentSchema(ma.Schema):
   # Tell Marshmallow to use UserSchema to serialize the 'user' field
-  user = fields.Nested('UserSchema', only=['name', 'email', 'is_admin'])
+  user = fields.Nested('UserSchema', only=['name', 'email'])
   card = fields.Nested('CardSchema', only=['title', 'description', 'status'])
+
   class Meta:
-    fields = ('id', 'message', 'title', 'date_created', 'user', 'card')
+    fields = ('id', 'message', 'date_created', 'user', 'card')
     ordered = True
